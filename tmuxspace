@@ -28,13 +28,13 @@ then
         setup: The way you want that window to be setup. It must be 3
         characters long.
             [   ]: One pane
-            [ | ]: Two vertical panes
-            [---]: Two horizonal panes
-            [-| ]: Two verical panes with the left split horizonally
-            [ |-]: Two verical panes with the right split horizonally
-            [-'-]: Two horizonal panes with the top split vertically
-            [-,-]: Two horizonal panes with the bottom split vertically
-            [-|-]: The 4 quadrants
+            [ | ]: Two panes split vertically
+            [---]: Two panes split horizontally
+            [-| ]: Three panes - two on the left and one on the right
+            [ |-]: Three panes - one on the left and two on the right
+            [-'-]: Three panes - two on the top and one on the bottom
+            [-,-]: Three panes - one on the top and two on the bottom
+            [-|-]: Four tiled panes
 
         You can have mutiple windows by adding another line
 
