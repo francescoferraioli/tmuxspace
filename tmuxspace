@@ -1,0 +1,205 @@
+TMUXSPACE=tmuxspace
+VERSION=0.0.1
+
+if [ $# -ne 1 ]
+then
+  echo "$0: missing file operand"
+  echo "Try '$0 --help' for more information."
+  exit 1
+fi
+
+if [ "$1" = '-h' ] || [ "$1" = '--help' ]
+then
+  cat <<-USAGE
+    Usage: $0 [FILE]
+
+        Start a new tmux workspace (session). It uses tmux-up under
+        the hood.
+
+        The FILE argument is used to bootstrap the new tmux session
+        if it doesn't already exist. It must end with .tmuxspace.conf.
+
+        It must contain lines in the following format:
+
+        path(name)[setup]
+
+        path: The path to the directory
+        name: The name of the window
+        setup: The way you want that window to be setup. It must be 3
+        characters long.
+            [   ]: One pane
+            [ | ]: Two vertical panes
+            [---]: Two horizonal panes
+            [-| ]: Two verical panes with the left split horizonally
+            [ |-]: Two verical panes with the right split horizonally
+            [-'-]: Two horizonal panes with the top split vertically
+            [-,-]: Two horizonal panes with the bottom split vertically
+            [-|-]: The 4 quadrants
+
+        You can have mutiple windows by adding another line
+
+            --help     display this help and exit
+            --version  output version information and exit
+	USAGE
+  exit 0
+fi
+
+if [ "$1" = '-v' ] || [ "$1" = '--version' ]
+then
+  cat <<-EOF
+		$TMUXSPACE $VERSION
+		Copyright (C) 2020 Francesco Ferraioli
+		License MIT: <http://opensource.org/licenses/MIT>.
+		This is free software: you are free to change and redistribute it.
+		There is NO WARRANTY, to the extent permitted by law.
+	EOF
+  exit 0
+fi
+
+INPUT_FILE=${1}
+
+if [[ "$INPUT_FILE" != *.tmuxspace.conf ]]
+then
+    echo "$0: ‘${INPUT_FILE}’: Needs to end with .tmuxspace.conf"
+    exit 1
+fi
+
+if [ ! -f "$INPUT_FILE" ]
+then
+    echo "$0: ‘${INPUT_FILE}’: No such file"
+    exit 1
+fi
+
+OUTPUT_FILE="$(basename "$INPUT_FILE" .tmuxspace.conf).conf"
+
+tmuxspace_run() {
+    if [ -f "$OUTPUT_FILE" ]
+    then
+        rm $OUTPUT_FILE
+    fi
+
+    touch $OUTPUT_FILE
+
+    IFS=$'\n' read -d '' -r -a windows < $INPUT_FILE
+
+    create_window "${windows[0]}"
+
+    for window in "${windows[@]:1:(${#windows[@]}-1)}"; do
+        new_window
+        create_window "${window}"
+    done
+
+    tmux-up $OUTPUT_FILE
+
+    rm $OUTPUT_FILE
+}
+
+create_window() {
+    DIR=$(echo "${1}" | sed 's/\(.*\)(.*)\[.*\]/\1/')
+    NAME=$(echo "${1}" | sed 's/.*(\(.*\))\[.*\]/\1/')
+    SETUP=$(echo "${1}" | sed 's/.*(.*)\(\[.*\]\)/\1/')
+
+    rename_window "${NAME}"
+
+    case "${SETUP}" in
+
+        "[ | ]")
+            go_to_dir "${DIR}"
+            split_vertically
+            go_to_dir "${DIR}"
+            select_pane "L"
+            ;;
+
+        "[---]")
+            go_to_dir "${DIR}"
+            split_horizonally
+            go_to_dir "${DIR}"
+            select_pane "U"
+            ;;
+
+        "[-| ]")
+            go_to_dir "${DIR}"
+            split_vertically
+            go_to_dir "${DIR}"
+            select_pane "L"
+            split_horizonally
+            go_to_dir "${DIR}"
+            select_pane "U"
+            ;;
+
+        "[ |-]")
+            go_to_dir "${DIR}"
+            split_vertically
+            go_to_dir "${DIR}"
+            split_horizonally
+            go_to_dir "${DIR}"
+            select_pane "L"
+            ;;
+
+        "[-'-]")
+            go_to_dir "${DIR}"
+            split_horizonally
+            go_to_dir "${DIR}"
+            select_pane "U"
+            split_vertically
+            go_to_dir "${DIR}"
+            select_pane "L"
+            ;;
+
+        "[-,-]")
+            go_to_dir "${DIR}"
+            split_horizonally
+            go_to_dir "${DIR}"
+            split_vertically
+            go_to_dir "${DIR}"
+            select_pane "U"
+            ;;
+
+        "[-|-]")
+            go_to_dir "${DIR}"
+            split_vertically
+            go_to_dir "${DIR}"
+            split_horizonally
+            go_to_dir "${DIR}"
+            select_pane "L"
+            split_horizonally
+            go_to_dir "${DIR}"
+            select_pane "U"
+            ;;
+
+        *)
+            go_to_dir "${DIR}"
+            ;;
+    esac
+}
+
+new_window() {
+    add_line_to_output_file "new-window"
+}
+
+rename_window() {
+    add_line_to_output_file "rename-window '$1'"
+}
+
+select_pane() {
+    add_line_to_output_file "select-pane -$1"
+}
+
+go_to_dir() {
+    add_line_to_output_file "send-keys 'cd $1' C-m"
+    add_line_to_output_file "send-keys 'clear' C-m"
+}
+
+split_vertically() {
+    add_line_to_output_file "split-window -h"
+}
+
+split_horizonally() {
+    add_line_to_output_file "split-window -v"
+}
+
+add_line_to_output_file() {
+    echo "$1" >> $OUTPUT_FILE
+}
+
+tmuxspace_run
