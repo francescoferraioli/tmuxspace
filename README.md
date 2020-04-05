@@ -25,7 +25,7 @@ Currently the only way to download and use tmuxspace is to clone this repo and c
 Define the desired initial state of your tmux session in a file. 
 
 The file must:
-- End with `.tmuxspace.conf`
+- End with `.tmuxspace`
 - Contain lines with the following format
 ```
 path(name)[setup]

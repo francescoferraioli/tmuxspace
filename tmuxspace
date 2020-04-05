@@ -17,7 +17,7 @@ then
         the hood.
 
         The FILE argument is used to bootstrap the new tmux session
-        if it doesn't already exist. It must end with .tmuxspace.conf.
+        if it doesn't already exist. It must end with .tmuxspace.
 
         It must contain lines in the following format:
 
@@ -58,9 +58,9 @@ fi
 
 INPUT_FILE=${1}
 
-if [[ "$INPUT_FILE" != *.tmuxspace.conf ]]
+if [[ "$INPUT_FILE" != *.tmuxspace ]]
 then
-    echo "$0: ‘${INPUT_FILE}’: Needs to end with .tmuxspace.conf"
+    echo "$0: ‘${INPUT_FILE}’: Needs to end with .tmuxspace"
     exit 1
 fi
 
@@ -70,7 +70,7 @@ then
     exit 1
 fi
 
-OUTPUT_FILE="$(basename "$INPUT_FILE" .tmuxspace.conf).conf"
+OUTPUT_FILE="$(basename "$INPUT_FILE" .tmuxspace).conf"
 
 tmuxspace_run() {
     if [ -f "$OUTPUT_FILE" ]
