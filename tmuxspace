@@ -85,8 +85,14 @@ tmuxspace_run() {
     create_window "${windows[0]}"
 
     for window in "${windows[@]:1:(${#windows[@]}-1)}"; do
-        new_window
-        create_window "${window}"
+        if [[ "${window}" =~ ^execute:[0-3]:.* ]]; then
+            execute_command "${window}"
+        elif [[ "${window}" =~ ^write:[0-3]:.* ]]; then
+            write_command "${window}"
+        else
+            new_window
+            create_window "${window}"
+        fi
     done
 
     tmux-up $OUTPUT_FILE
@@ -171,6 +177,20 @@ create_window() {
             go_to_dir "${DIR}"
             ;;
     esac
+}
+
+execute_command() {
+    PANE=$(echo "${1}" | sed 's/execute:\([0-3]\):.*/\1/')
+    COMMAND=$(echo "${1}" | sed 's/execute:[0-3]:\(.*\)/\1/')
+    add_line_to_output_file "select-pane -t $PANE"
+    add_line_to_output_file "send-keys '${COMMAND}' C-m"
+}
+
+write_command() {
+    PANE=$(echo "${1}" | sed 's/write:\([0-3]\):.*/\1/')
+    COMMAND=$(echo "${1}" | sed 's/write:[0-3]:\(.*\)/\1/')
+    add_line_to_output_file "select-pane -t $PANE"
+    add_line_to_output_file "send-keys '${COMMAND}'"
 }
 
 new_window() {
