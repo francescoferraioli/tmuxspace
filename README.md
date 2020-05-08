@@ -26,15 +26,21 @@ Define the desired initial state of your tmux session in a file.
 
 The file must:
 - End with `.tmuxspace`
-- Contain lines with the following format
-```
-path(name)[setup]
-```
-> path: The path to the directory
+- Contain lines with the following formats
 
-> name: The name of the window
+### Defining a new window
 
-> setup: The way you want that window to be setup. It must be 3
+_The first line must be a new window instruction_
+
+```
+PATH(NAME)[SETUP]
+```
+
+> PATH: The path to the directory
+
+> NAME: The name of the window
+
+> SETUP: The way you want that window to be setup. It must be 3
 characters long.
 
     [   ]: One pane
@@ -46,13 +52,33 @@ characters long.
     [-,-]: Three panes - one on the top and two on the bottom
     [-|-]: Four tiled panes
 
+### Writing/Executing a command on a pane
+
+```
+ACTION:PANE:COMMAND
+```
+
+> ACTION: The two options are `write` or `execute`.
+
+> PANE: This is the pane number you want the command to be actioned.
+
+> COMMAND: The command you want tmuxspace to action.
+
 ### Example
 
 ```
-~/code/frontend(frontend)[ |-]
+~/code/frontend(frontend)[---]
+execute:0:bin/run.sh
+execute:1:bin/test.sh
 ~/code/backend(backend)[ | ]
+execute:0:bin/setup.sh
+write:1:bin/run.sh
 ```
 
 This would start a session with two windows:
-- frontend with 3 panes at ~/code/frontend
+- frontend with 2 panes at ~/code/frontend
+  - Top pane running the front end
+  - Bottom pane running the tests
 - backend with 2 panes at ~/code/backend
+  - Left pane running the setup script
+  - Right pane ready to run the backend
